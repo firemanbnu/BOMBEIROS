@@ -1,0 +1,366 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== CORPORACAO ====================
+model Corporacao {
+  id            String   @id @default(uuid())
+  nome          String
+  cnpj          String?  @unique
+  nomeFantasia  String?
+  endereco      String?
+  cidade        String?
+  estado        String?
+  cep           String?
+  telefone      String?
+  email         String?
+  logoUrl       String?
+  corPrimaria   String   @default("#DC2626")
+  corSecundaria String   @default("#1E3A5F")
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  usuarios    Usuario[]
+  viaturas    Viatura[]
+  guarnicoes  Guarnicao[]
+  ocorrencias Ocorrencia[]
+
+  @@map("corporacoes")
+}
+
+// ==================== USUARIO ====================
+model Usuario {
+  id            String   @id @default(uuid())
+  corporacaoId  String
+  nome          String
+  email         String   @unique
+  senhaHash     String
+  role          Role     @default(SOCORRISTA)
+  ativo         Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  corporacao          Corporacao     @relation(fields: [corporacaoId], references: [id])
+  ocorrenciasOperador Ocorrencia[]   @relation("OperadorOcorrencia")
+  fichasAPH           FichaAPH[]     @relation("FichaPreenchidaPor")
+
+  @@map("usuarios")
+}
+
+enum Role {
+  ADMIN
+  CHEFE_SERVICO
+  OPERADOR
+  SOCORRISTA
+}
+
+// ==================== VIATURA ====================
+model Viatura {
+  id                  String   @id @default(uuid())
+  corporacaoId        String
+  placa               String
+  identificacao       String
+  tipo                TipoViatura
+  capacidadeGuarnicao Int      @default(3)
+  equipamentoAPH      Boolean  @default(false)
+  ativo               Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  corporacao         Corporacao         @relation(fields: [corporacaoId], references: [id])
+  guarnicoesEscaladas EscalaServico[]
+  empenhos           ViaturaEmpenhada[]
+
+  @@unique([corporacaoId, placa])
+  @@unique([corporacaoId, identificacao])
+  @@map("viaturas")
+}
+
+enum TipoViatura {
+  ASU
+  ABT
+  ABTC
+  APH
+  CAVALO_MECANICO
+  CAPOEIRA
+  MOTORREDATOR
+  SOCORRO_RAPIDO
+  OUTROS
+}
+
+// ==================== GUARNICAO ====================
+model Guarnicao {
+  id           String   @id @default(uuid())
+  corporacaoId String
+  nome         String
+  matricula    String
+  funcao       FuncaoGuarnicao
+  habilitacoes Json     @default("[]")
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  corporacao Corporacao   @relation(fields: [corporacaoId], references: [id])
+  escalas    EscalaServico[]
+  fichasAPH  FichaAPH[]   @relation("FichaGuarnicao")
+
+  @@unique([corporacaoId, matricula])
+  @@map("guarnicoes")
+}
+
+enum FuncaoGuarnicao {
+  COMANDANTE
+  SOCORRISTA_1
+  SOCORRISTA_2
+  SOCORRISTA_3
+  MOTORISTA
+  BOMBEIRO
+}
+
+// ==================== ESCALA DE SERVICO ====================
+model EscalaServico {
+  id              String   @id @default(uuid())
+  viaturaId       String
+  guarnicaoId     String
+  funcaoNaViatura FuncaoNaViatura
+  dataInicio      DateTime
+  dataFim         DateTime
+  observacoes     String?
+  criadoPorId     String?
+  createdAt       DateTime @default(now())
+
+  viatura   Viatura   @relation(fields: [viaturaId], references: [id])
+  guarnicao Guarnicao @relation(fields: [guarnicaoId], references: [id])
+
+  @@map("escalas_servico")
+}
+
+enum FuncaoNaViatura {
+  CMT
+  S1
+  S2
+  S3
+  MOTORISTA_ESC
+}
+
+// ==================== OCORRENCIA ====================
+model Ocorrencia {
+  id                 String           @id @default(uuid())
+  corporacaoId       String
+  numeroSequencial   Int
+  tipo               TipoOcorrencia
+  status             StatusOcorrencia @default(ABERTA)
+  prioridade         Prioridade       @default(MEDIA)
+  descricao          String?
+  localizacao        String?
+  bairro             String?
+  referencias        String?
+  qtdVitimas         Int              @default(0)
+  dataHoraChamada    DateTime
+  dataHoraAbertura   DateTime         @default(now())
+  dataHoraFechamento DateTime?
+  operadorId         String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  corporacao        Corporacao          @relation(fields: [corporacaoId], references: [id])
+  operador          Usuario?            @relation("OperadorOcorrencia", fields: [operadorId], references: [id])
+  viaturasEmpenhadas ViaturaEmpenhada[]
+  fichasAPH         FichaAPH[]
+
+  @@unique([corporacaoId, numeroSequencial])
+  @@map("ocorrencias")
+}
+
+enum TipoOcorrencia {
+  INCENDIO
+  RESGATE
+  APH
+  BUSCA_SALVAMENTO
+  PREVENCAO
+  ALAGAMENTO
+  DESABAMENTO
+  OUTROS
+}
+
+enum StatusOcorrencia {
+  ABERTA
+  EM_ATENDIMENTO
+  ENCERRADA
+}
+
+enum Prioridade {
+  ALTA
+  MEDIA
+  BAIXA
+}
+
+// ==================== VIATURA EMPENHADA ====================
+model ViaturaEmpenhada {
+  id                       String   @id @default(uuid())
+  ocorrenciaId             String
+  viaturaId                String
+  horaAcionamento          DateTime?
+  horaChegadaLocal         DateTime?
+  horaTermino              DateTime?
+  horaChegadaQuartel       DateTime?
+  horaDeslocamentoHospital DateTime?
+  horaChegadaHospital      DateTime?
+  status                   StatusEmpenho @default(ACIONADA)
+  observacoes              String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  ocorrencia Ocorrencia @relation(fields: [ocorrenciaId], references: [id])
+  viatura    Viatura     @relation(fields: [viaturaId], references: [id])
+  fichasAPH  FichaAPH[]
+
+  @@map("viaturas_empenhadas")
+}
+
+enum StatusEmpenho {
+  ACIONADA
+  A_CENA
+  EM_ATENDIMENTO
+  RETORNO
+  NO_QUARTEL
+  DESPACHADA
+}
+
+// ==================== FICHA APH ====================
+model FichaAPH {
+  id                  String   @id @default(uuid())
+  ocorrenciaId        String
+  viaturaEmpenhadaId  String
+  numeroFicha         String
+  data                DateTime @default(now())
+  hora                String
+  preenchidoPorId     String
+  guarnicaoId         String?
+  assinaturaUrl       String?
+
+  localOcorrencia     String?
+  municipio           String?
+  uf                  String?
+  cepLocal            String?
+
+  NaturezaChamada     String?
+  NumeroSAMU          String?
+  NumeroPM            String?
+  NumeroPC            String?
+
+  materiaisDeixados   String?
+
+  nomePaciente        String?
+  idadePaciente       Int?
+  sexoPaciente        String?
+  documentoPaciente   String?
+  enderecoPaciente    String?
+  telefonePaciente    String?
+  nomeMaePaciente     String?
+  pesoPaciente        Float?
+  alturaPaciente      Float?
+
+  viaAerea            String?
+  respiracao          String?
+  circulacao          String?
+  pele                String?
+  estadoConsciencia   String?
+  pressaoArterial     String?
+  pulso               String?
+  respiracaoFrequencia String?
+  temperatura         String?
+  spO2                String?
+  glasgow             Int?
+  DorEscala           Int?
+  historicoClinico    String?
+
+  procedimentosRealizados Json @default("[]")
+
+  desfecho            DesfechoAPH @default(TRANSPORTADO)
+
+  recursosAdicionais  String?
+
+  hospitalDestino     String?
+  horaChegadaHospital DateTime?
+  horaEntregaPaciente DateTime?
+  medicoRecebedor     String?
+
+  dispositivoSeguranca DispositivoSeguranca @default(NENHUM)
+
+  termoRecusa         Boolean  @default(false)
+  textoRecusa         String?
+
+  observacoes         String?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  ocorrencia       Ocorrencia        @relation(fields: [ocorrenciaId], references: [id])
+  viaturaEmpenhada ViaturaEmpenhada  @relation(fields: [viaturaEmpenhadaId], references: [id])
+  preenchidoPor    Usuario?          @relation("FichaPreenchidaPor", fields: [preenchidoPorId], references: [id])
+  guarnicao        Guarnicao?        @relation("FichaGuarnicao", fields: [guarnicaoId], references: [id])
+  victimas         FichaAPHVitima[]
+
+  @@map("fichas_aph")
+}
+
+enum DesfechoAPH {
+  TRANSPORTADO
+  NAO_TRANSPORTADO
+  OBITO
+  RECUSA
+  DISPENSA
+}
+
+enum DispositivoSeguranca {
+  CINTO
+  CADEIRINHA
+  BEBE_CONCHINHA
+  NENHUM
+  OUTRO
+}
+
+// ==================== FICHA APH VITIMA ====================
+model FichaAPHVitima {
+  id              String   @id @default(uuid())
+  fichaAPHId      String
+  nomeVitima      String?
+  idadeVitima     Int?
+  sexoVitima      String?
+  documentoVitima String?
+
+  queixaPrincipal  String?
+  alergias         String?
+  medicacoes       String?
+  pressaoArterial  String?
+  pulso            String?
+  respiracao       String?
+  temperatura      String?
+  spO2             String?
+  glasgow          Int?
+
+  procedimentos Json @default("[]")
+
+  desfecho       String?
+  hospitalDestino String?
+  horaTransporte  DateTime?
+  horaChegadaHospital DateTime?
+
+  dispositivoSeguranca String?
+
+  observacoes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fichaAPH FichaAPH @relation(fields: [fichaAPHId], references: [id])
+
+  @@map("fichas_aph_vitimas")
+}
