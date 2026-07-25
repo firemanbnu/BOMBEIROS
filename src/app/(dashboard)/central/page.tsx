@@ -331,6 +331,22 @@ function AbaOcorrencia({
     carregarOcorrencia();
   };
 
+  const registrarHorario = async (empenhoId: string, campo: string) => {
+    const statusMap: Record<string, string> = {
+      horaAcionamento: "ACIONADA",
+      horaChegadaLocal: "A_CENA",
+      horaTermino: "EM_ATENDIMENTO",
+      horaDeslocamentoHospital: "RETORNO",
+      horaChegadaQuartel: "NO_QUARTEL",
+    };
+    await fetch("/api/viaturas-empenhadas", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: empenhoId, [campo]: new Date().toISOString(), status: statusMap[campo] }),
+    });
+    carregarOcorrencia();
+  };
+
   const todasNoQuartel = ocorrencia?.viaturasEmpenhadas.every(
     (v) => v.status === "NO_QUARTEL" || v.status === "DESPACHADA"
   );
@@ -464,23 +480,43 @@ function AbaOcorrencia({
 
                 {/* Timeline da viatura */}
                 <div className="grid grid-cols-5 gap-2 text-xs">
-                  <div className={`${emp.horaAcionamento ? "text-white" : "text-gray-600"}`}>
+                  <div
+                    onClick={() => !emp.horaAcionamento && ocorrencia.status !== "ENCERRADA" && registrarHorario(emp.id, "horaAcionamento")}
+                    className={`${emp.horaAcionamento ? "text-white" : "text-gray-600 cursor-pointer hover:text-blue-400 hover:bg-gray-800 rounded p-1 transition-colors"}`}
+                    title={!emp.horaAcionamento ? "Clique para registrar horário" : undefined}
+                  >
                     <span className="text-gray-500">Acionamento:</span><br />
                     {emp.horaAcionamento ? new Date(emp.horaAcionamento).toLocaleTimeString("pt-BR") : "--:--"}
                   </div>
-                  <div className={`${emp.horaChegadaLocal ? "text-white" : "text-gray-600"}`}>
+                  <div
+                    onClick={() => !emp.horaChegadaLocal && ocorrencia.status !== "ENCERRADA" && registrarHorario(emp.id, "horaChegadaLocal")}
+                    className={`${emp.horaChegadaLocal ? "text-white" : "text-gray-600 cursor-pointer hover:text-blue-400 hover:bg-gray-800 rounded p-1 transition-colors"}`}
+                    title={!emp.horaChegadaLocal ? "Clique para registrar horário" : undefined}
+                  >
                     <span className="text-gray-500">Chegada Local:</span><br />
                     {emp.horaChegadaLocal ? new Date(emp.horaChegadaLocal).toLocaleTimeString("pt-BR") : "--:--"}
                   </div>
-                  <div className={`${emp.horaTermino ? "text-white" : "text-gray-600"}`}>
+                  <div
+                    onClick={() => !emp.horaTermino && ocorrencia.status !== "ENCERRADA" && registrarHorario(emp.id, "horaTermino")}
+                    className={`${emp.horaTermino ? "text-white" : "text-gray-600 cursor-pointer hover:text-blue-400 hover:bg-gray-800 rounded p-1 transition-colors"}`}
+                    title={!emp.horaTermino ? "Clique para registrar horário" : undefined}
+                  >
                     <span className="text-gray-500">Término:</span><br />
                     {emp.horaTermino ? new Date(emp.horaTermino).toLocaleTimeString("pt-BR") : "--:--"}
                   </div>
-                  <div className={`${emp.horaDeslocamentoHospital ? "text-white" : "text-gray-600"}`}>
+                  <div
+                    onClick={() => !emp.horaDeslocamentoHospital && ocorrencia.status !== "ENCERRADA" && registrarHorario(emp.id, "horaDeslocamentoHospital")}
+                    className={`${emp.horaDeslocamentoHospital ? "text-white" : "text-gray-600 cursor-pointer hover:text-blue-400 hover:bg-gray-800 rounded p-1 transition-colors"}`}
+                    title={!emp.horaDeslocamentoHospital ? "Clique para registrar horário" : undefined}
+                  >
                     <span className="text-gray-500">Desl. Hospital:</span><br />
                     {emp.horaDeslocamentoHospital ? new Date(emp.horaDeslocamentoHospital).toLocaleTimeString("pt-BR") : "--:--"}
                   </div>
-                  <div className={`${emp.horaChegadaQuartel ? "text-white" : "text-gray-600"}`}>
+                  <div
+                    onClick={() => !emp.horaChegadaQuartel && ocorrencia.status !== "ENCERRADA" && registrarHorario(emp.id, "horaChegadaQuartel")}
+                    className={`${emp.horaChegadaQuartel ? "text-white" : "text-gray-600 cursor-pointer hover:text-blue-400 hover:bg-gray-800 rounded p-1 transition-colors"}`}
+                    title={!emp.horaChegadaQuartel ? "Clique para registrar horário" : undefined}
+                  >
                     <span className="text-gray-500">Chegada Quartel:</span><br />
                     {emp.horaChegadaQuartel ? new Date(emp.horaChegadaQuartel).toLocaleTimeString("pt-BR") : "--:--"}
                   </div>
