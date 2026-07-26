@@ -246,9 +246,11 @@ model FichaAPH {
   assinaturaUrl       String?
 
   localOcorrencia     String?
+  bairro              String?
   municipio           String?
   uf                  String?
   cepLocal            String?
+  referencias         String?
 
   NaturezaChamada     String?
   NumeroSAMU          String?
@@ -256,6 +258,15 @@ model FichaAPH {
   NumeroPC            String?
 
   materiaisDeixados   String?
+
+  caracterizacaoLocal String?
+  acidenteTrabalho    Boolean?
+  produtosPerigosos   String?
+  tipoTrauma          String?
+  violenciaTipo       String?
+  quedaDetalhes       String?
+  veiculosEnvolvidos  Json?
+  afogamentoLocal     String?
 
   nomePaciente        String?
   idadePaciente       Int?
@@ -266,6 +277,14 @@ model FichaAPH {
   nomeMaePaciente     String?
   pesoPaciente        Float?
   alturaPaciente      Float?
+  dataNascimento      String?
+
+  passadoMedico       Json?
+  alergias            String?
+  medicacoesEmUso     String?
+  nivelConscienciaDet String?
+  posicaoPaciente     String?
+  caracteristicasPele String?
 
   viaAerea            String?
   respiracao          String?
@@ -280,6 +299,11 @@ model FichaAPH {
   glasgow             Int?
   DorEscala           Int?
   historicoClinico    String?
+  glasgowDetalhe      Json?
+  avaliacaoPupilar    String?
+  abdome              String?
+  lesaoCervical       String?
+  perfusao            String?
 
   procedimentosRealizados Json @default("[]")
 
@@ -293,6 +317,12 @@ model FichaAPH {
   medicoRecebedor     String?
 
   dispositivoSeguranca DispositivoSeguranca @default(NENHUM)
+  segurancaDetalhes   Json?
+  tipoEncarceramento  String?
+  desfechoOcorrencia  String?
+  destinoPaciente     String?
+  testemunhas         Json?
+  assinaturaPreenchido String?
 
   termoRecusa         Boolean  @default(false)
   textoRecusa         String?

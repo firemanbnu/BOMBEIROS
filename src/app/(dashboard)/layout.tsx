@@ -52,6 +52,25 @@ const menuItems = [
     ),
   },
   {
+    label: "Ficha APH",
+    href: "/ficha-aph",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+  },
+  {
+    label: "Usuários",
+    href: "/usuarios",
+    adminOnly: true,
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    ),
+  },
+  {
     label: "Configurações",
     href: "/configuracoes",
     icon: (
@@ -67,6 +86,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { data: session } = useSession();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const isAdmin = (session?.user as unknown as Record<string, unknown>)?.role === "ADMIN";
+
+  const filteredMenu = menuItems.filter((item) => !(item as Record<string, unknown>).adminOnly || isAdmin);
 
   return (
     <div className="min-h-screen bg-gray-950 flex">
@@ -100,7 +123,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Navigation */}
         <nav className="flex-1 py-4">
-          {menuItems.map((item) => {
+          {filteredMenu.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
